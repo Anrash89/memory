@@ -1,8 +1,7 @@
-// Импорт Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- ТВОИ НАСТРОЙКИ FIREBASE ---
+// ТВОЙ КОНФИГ
 const firebaseConfig = {
     apiKey: "AIzaSyDwb1lT9GZCF1MViq71aXr1ggtMKYNK2qE",
     authDomain: "memory-4569e.firebaseapp.com",
@@ -17,14 +16,11 @@ let db;
 try {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-} catch (e) {
-    console.warn("Ошибка Firebase:", e);
-}
+} catch (e) { console.warn(e); }
 
 const tg = window.Telegram.WebApp;
-tg.expand(); 
+tg.expand();
 
-// --- КАРТИНКИ ---
 const imageFiles = [
     'img/item1.png', 'img/item2.png', 'img/item3.png', 'img/item4.png',
     'img/item5.png', 'img/item6.png', 'img/item7.png', 'img/item8.png'
@@ -37,28 +33,48 @@ let timer;
 let timeElapsed = 0;
 let isPlaying = false;
 
-const user = tg.initDataUnsafe.user || { id: 'test_local', first_name: 'Игрок', photo_url: '' };
+const user = tg.initDataUnsafe.user || { id: 'test', first_name: 'Игрок', photo_url: '' };
 
-// --- ЭКРАНЫ ---
+// --- ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ (ИСПРАВЛЕНАЯ) ---
 function showScreen(screenId) {
+    // Сначала скрываем всё через display: none
     document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active');
         s.classList.add('hidden');
     });
+    
+    // Показываем нужное
     const screen = document.getElementById(screenId);
-    screen.classList.remove('hidden');
-    screen.classList.add('active');
-
+    if(screen) {
+        screen.classList.remove('hidden');
+    }
+    
     if (screenId === 'leaderboard-screen') loadLeaderboard();
 }
 
-// Кнопки
+// --- СЛУШАТЕЛИ КНОПОК ---
+// Меню
 document.getElementById('btn-play').addEventListener('click', () => { showScreen('game-screen'); initGame(); });
 document.getElementById('btn-leaders').addEventListener('click', () => showScreen('leaderboard-screen'));
-// Кнопка домика удалена, поэтому удаляем и слушатель для нее
-document.getElementById('btn-back-from-leaders').addEventListener('click', () => showScreen('menu-screen'));
-document.getElementById('btn-menu-win').addEventListener('click', () => { document.getElementById('modal').classList.add('hidden'); showScreen('menu-screen'); });
-document.getElementById('btn-restart').addEventListener('click', () => { document.getElementById('modal').classList.add('hidden'); initGame(); });
+
+// Внутри игры
+document.getElementById('btn-back-menu').addEventListener('click', () => { clearInterval(timer); showScreen('menu-screen'); });
+
+// В лидерборде (КНОПКА НАЗАД)
+document.getElementById('btn-back-from-leaders').addEventListener('click', () => { 
+    showScreen('menu-screen'); 
+});
+
+// Модальное окно победы
+document.getElementById('btn-menu-win').addEventListener('click', () => { 
+    document.getElementById('modal').classList.add('hidden'); 
+    showScreen('menu-screen'); 
+});
+
+document.getElementById('btn-restart').addEventListener('click', () => { 
+    document.getElementById('modal').classList.add('hidden'); 
+    initGame(); 
+});
+
 
 // --- ИГРА ---
 function shuffle(array) {
@@ -74,28 +90,24 @@ function initGame() {
     document.getElementById('time').innerText = '0с';
     document.getElementById('score').innerText = '0';
     
-    // Дублируем и мешаем
     cards = shuffle([...imageFiles, ...imageFiles]);
 
-    // Создаем карты
     cards.forEach((imgSrc, index) => {
         const card = document.createElement('div');
         card.classList.add('card');
         card.dataset.index = index;
         card.dataset.img = imgSrc;
 
-        // Вставляем картинки
         card.innerHTML = `
             <div class="card-inner">
                 <div class="card-front">
-                    <img src="${imgSrc}" alt="item">
+                    <img src="${imgSrc}">
                 </div>
                 <div class="card-back">
-                    <img src="img/logo.png" alt="back">
+                    <img src="img/logo.png">
                 </div>
             </div>
         `;
-
         card.addEventListener('click', function() { flipCard(this); });
         board.appendChild(card);
     });
@@ -105,7 +117,6 @@ function initGame() {
         timeElapsed++;
         document.getElementById('time').innerText = `${timeElapsed}с`;
     }, 1000);
-    
     isPlaying = true;
 }
 
@@ -117,20 +128,15 @@ function flipCard(card) {
     card.classList.add('flipped');
     flippedCards.push(card);
 
-    if (flippedCards.length === 2) {
-        checkMatch();
-    }
+    if (flippedCards.length === 2) checkMatch();
 }
 
 function checkMatch() {
     const [card1, card2] = flippedCards;
-
     if (card1.dataset.img === card2.dataset.img) {
         matchedPairs++;
         flippedCards = [];
-        if (matchedPairs === imageFiles.length) {
-            endGame();
-        }
+        if (matchedPairs === imageFiles.length) endGame();
     } else {
         setTimeout(() => {
             card1.classList.remove('flipped');
@@ -146,11 +152,12 @@ function endGame() {
     let score = Math.floor(10000 / (timeElapsed + 10));
     document.getElementById('final-time').innerText = timeElapsed;
     document.getElementById('final-score').innerText = score;
+    // Показываем модалку
     document.getElementById('modal').classList.remove('hidden');
     saveScore(score);
 }
 
-// --- БАЗА ДАННЫХ ---
+// --- БД ---
 async function saveScore(newScore) {
     if (!db) return;
     const userRef = doc(db, "leaderboard", user.id.toString());
@@ -158,7 +165,6 @@ async function saveScore(newScore) {
         const docSnap = await getDoc(userRef);
         let bestScore = 0;
         if (docSnap.exists()) bestScore = docSnap.data().score;
-
         if (newScore > bestScore) {
             await setDoc(userRef, {
                 username: user.first_name,
@@ -175,13 +181,11 @@ async function loadLeaderboard() {
     if (!db) return;
     const list = document.getElementById('leaderboard-list');
     list.innerHTML = '<li class="loading">Загрузка...</li>';
-
     try {
         const q = query(collection(db, "leaderboard"), orderBy("score", "desc"), limit(20));
         const querySnapshot = await getDocs(q);
         list.innerHTML = '';
         let rank = 1;
-
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const li = document.createElement('li');
@@ -194,9 +198,8 @@ async function loadLeaderboard() {
             if (rank === 3) rankIcon = '🥉';
 
             const avatarSrc = data.avatar || 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
-
             li.innerHTML = `
-                <div style="width:30px; font-weight:bold;">${rankIcon}</div>
+                <div style="width:30px;font-weight:bold;">${rankIcon}</div>
                 <img src="${avatarSrc}" class="leader-avatar">
                 <div class="leader-name">${data.username}</div>
                 <div class="leader-score">${data.score}</div>
