@@ -1,289 +1,249 @@
-// Импорт Firebase через CDN (специально для браузера/GitHub Pages)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// --- 🔥 ТВОИ НАСТРОЙКИ С КАРТИНКИ (Я ИХ УЖЕ ВСТАВИЛ) 🔥 ---
-const firebaseConfig = {
-    apiKey: "AIzaSyDwb1lT9GZCF1MViq71aXr1ggtMKYNK2qE",
-    authDomain: "memory-4569e.firebaseapp.com",
-    projectId: "memory-4569e",
-    storageBucket: "memory-4569e.firebasestorage.app",
-    messagingSenderId: "405838410040",
-    appId: "1:405838410040:web:6aa0b8e8c15ad4eeef91cd",
-    measurementId: "G-VEG2RSWXQT"
-};
-
-// Инициализация базы данных
-let db;
-try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    console.log("Firebase успешно подключен!");
-} catch (e) {
-    console.error("Ошибка подключения Firebase:", e);
+:root {
+    --bg-color: #1a0b2e;
+    --card-bg: #2e1a47;
+    --gold: #FFD700;
+    --silver: #C0C0C0;
+    --bronze: #CD7F32;
+    --accent: #9d4edd;
 }
 
-// Подключаем Телеграм
-const tg = window.Telegram.WebApp;
-tg.expand(); // Разворачиваем на весь экран
-
-// --- НАСТРОЙКИ ИГРЫ ---
-// Убедись, что картинки с такими именами лежат в папке img
-const imageFiles = [
-    'img/item1.png', 
-    'img/item2.png', 
-    'img/item3.png', 
-    'img/item4.png',
-    'img/item5.png', 
-    'img/item6.png', 
-    'img/item7.png', 
-    'img/item8.png'
-];
-
-let cards = [];
-let flippedCards = [];
-let matchedPairs = 0;
-let timer;
-let timeElapsed = 0;
-let isPlaying = false;
-
-// Данные пользователя (если открыли не в ТГ, будет "Гость")
-const user = tg.initDataUnsafe.user || { id: 'test_user_pc', first_name: 'Гость', photo_url: '' };
-
-// --- УПРАВЛЕНИЕ ЭКРАНАМИ ---
-function showScreen(screenId) {
-    // Скрываем все экраны
-    document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active');
-        s.classList.add('hidden');
-    });
-    // Показываем нужный
-    const screen = document.getElementById(screenId);
-    screen.classList.remove('hidden');
-    screen.classList.add('active');
-
-    // Если открыли лидерборд - загружаем данные
-    if (screenId === 'leaderboard-screen') {
-        loadLeaderboard();
-    }
+body {
+    background: linear-gradient(135deg, #0f0518, #32004f);
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden; /* Чтобы не скроллилось всё окно */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
-// --- КНОПКИ ---
-document.getElementById('btn-play').addEventListener('click', () => {
-    showScreen('game-screen');
-    initGame();
-});
-
-document.getElementById('btn-leaders').addEventListener('click', () => {
-    showScreen('leaderboard-screen');
-});
-
-document.getElementById('btn-back-menu').addEventListener('click', () => {
-    clearInterval(timer);
-    showScreen('menu-screen');
-});
-
-document.getElementById('btn-back-from-leaders').addEventListener('click', () => {
-    showScreen('menu-screen');
-});
-
-document.getElementById('btn-menu-win').addEventListener('click', () => {
-    document.getElementById('modal').classList.add('hidden');
-    showScreen('menu-screen');
-});
-
-document.getElementById('btn-restart').addEventListener('click', () => {
-    document.getElementById('modal').classList.add('hidden');
-    initGame();
-});
-
-
-// --- ЛОГИКА ИГРЫ ---
-function shuffle(array) {
-    return array.sort(() => Math.random() - 0.5);
+.app-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
-function initGame() {
-    const board = document.getElementById('board');
-    board.innerHTML = '';
-    matchedPairs = 0;
-    timeElapsed = 0;
-    flippedCards = [];
+/* Экраны */
+.screen {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 10;
+}
+
+/* МЕНЮ */
+#menu-screen {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+h1 {
+    font-size: 48px;
+    line-height: 1;
+    margin-bottom: 10px;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 300px;
+    margin-top: 40px;
+}
+
+.main-btn {
+    padding: 18px;
+    border: none;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: transform 0.1s;
+}
+.main-btn:active { transform: scale(0.96); }
+
+.play-btn { background: var(--gold); color: #2e1a47; }
+.leaders-btn { background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(255,255,255,0.2); }
+
+/* ИГРА */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* --- ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ КАРТ --- */
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+    /* Убрали жесткий aspect-ratio, чтобы сетка дышала */
+    perspective: 1000px;
+    margin: 0 auto;
+}
+
+/* Внешний контейнер карты - делаем его невидимым */
+.card {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    cursor: pointer;
     
-    // Сброс текстов
-    document.getElementById('time').innerText = '0с';
-    document.getElementById('score').innerText = '0';
+    /* ВАЖНО: Убираем фон, рамки и отступы у контейнера */
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
     
-    // Перемешиваем и удваиваем карты
-    cards = shuffle([...imageFiles, ...imageFiles]);
+    /* Делаем карты прямоугольными */
+    aspect-ratio: 2 / 3; 
+    width: 100%;
+}
 
-    // Создаем карточки на поле
-    cards.forEach((imgSrc, index) => {
-        const card = document.createElement('div');
-        card.classList.add('card');
-        card.dataset.index = index;
-        card.dataset.img = imgSrc;
+.card.flipped {
+    transform: rotateY(180deg);
+}
 
-        // Внимание: тут прописаны классы card-front и card-back
-        // card-front - это ЛИЦО (картинка)
-        // card-back - это РУБАШКА
-        card.innerHTML = `
-            <div class="card-front"><img src="${imgSrc}"></div>
-            <div class="card-back"></div>
-        `;
-
-        card.addEventListener('click', flipCard);
-        board.appendChild(card);
-    });
-
-    // Запускаем таймер
-    clearInterval(timer);
-    timer = setInterval(() => {
-        timeElapsed++;
-        document.getElementById('time').innerText = `${timeElapsed}с`;
-    }, 1000);
+/* Внутренние части карты - они теперь будут видимыми */
+.card-front, .card-back {
+    position: absolute;
+    width: 100%; 
+    height: 100%;
+    border-radius: 12px; /* Скругление углов самой карты */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backface-visibility: hidden;
     
-    isPlaying = true;
+    /* Рамка и тень теперь только у внутренней части */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border: 2px solid var(--gold);
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-function flipCard() {
-    if (!isPlaying) return;
-    if (flippedCards.length >= 2) return; // Нельзя открыть 3 карты сразу
-    if (this.classList.contains('flipped')) return; // Нельзя нажать на уже открытую
-
-    this.classList.add('flipped');
-    flippedCards.push(this);
-
-    if (flippedCards.length === 2) {
-        checkMatch();
-    }
+.card-front { 
+    background: #fff; /* Белый фон только ПОД картинкой с фокусом */
+    transform: rotateY(180deg); 
 }
 
-function checkMatch() {
-    const [card1, card2] = flippedCards;
-
-    // Сравниваем картинки
-    if (card1.dataset.img === card2.dataset.img) {
-        // СОВПАДЕНИЕ
-        matchedPairs++;
-        flippedCards = [];
-        
-        // Если нашли все пары
-        if (matchedPairs === imageFiles.length) {
-            endGame();
-        }
-    } else {
-        // НЕ СОВПАЛИ - закрываем через 0.7 сек
-        setTimeout(() => {
-            card1.classList.remove('flipped');
-            card2.classList.remove('flipped');
-            flippedCards = [];
-        }, 700);
-    }
+.card-front img { 
+    width: 90%; 
+    height: 90%; 
+    object-fit: contain; 
 }
 
-function endGame() {
-    clearInterval(timer);
-    isPlaying = false;
-    
-    // --- ПОДСЧЕТ ОЧКОВ ---
-    // Формула: 10000 / (время + 10).
-    // Пример: 40 сек -> ~200 очков.
-    let score = Math.floor(10000 / (timeElapsed + 10));
-    
-    document.getElementById('final-time').innerText = timeElapsed;
-    document.getElementById('final-score').innerText = score;
-    document.getElementById('modal').classList.remove('hidden');
-
-    saveScore(score);
+.card-back { 
+    /* Твоя рубашка с логотипом */
+    background: var(--card-bg) url('img/logo.png') center/cover no-repeat; 
 }
 
-// --- РАБОТА С БАЗОЙ ДАННЫХ (Лидерборд) ---
+/* --- КОНЕЦ ИСПРАВЛЕНИЯ КАРТ --- */
 
-async function saveScore(newScore) {
-    if (!db) return;
-    
-    const userId = user.id.toString();
-    const userRef = doc(db, "leaderboard", userId);
-
-    try {
-        // Сначала проверяем старый рекорд
-        const docSnap = await getDoc(userRef);
-        let bestScore = 0;
-        
-        if (docSnap.exists()) {
-            bestScore = docSnap.data().score;
-        }
-
-        // Если новый результат лучше старого -> сохраняем
-        if (newScore > bestScore) {
-            await setDoc(userRef, {
-                username: user.first_name, // Имя из ТГ
-                avatar: user.photo_url || "", // Аватарка из ТГ
-                score: newScore,
-                time: timeElapsed,
-                date: Date.now()
-            });
-            console.log("Новый рекорд сохранен!");
-        }
-    } catch (e) { 
-        console.error("Ошибка сохранения рекорда:", e); 
-    }
+/* ЛИДЕРБОРД */
+.leaderboard-container {
+    flex: 1;
+    overflow-y: auto; /* Скролл только внутри списка */
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
+    padding: 10px;
 }
 
-async function loadLeaderboard() {
-    const list = document.getElementById('leaderboard-list');
-    list.innerHTML = '<li class="loading">Загрузка магии... 🔮</li>';
-
-    if (!db) {
-        list.innerHTML = '<li>Ошибка подключения к БД</li>';
-        return;
-    }
-
-    try {
-        // Берем топ-20 игроков по очкам
-        const q = query(collection(db, "leaderboard"), orderBy("score", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
-
-        list.innerHTML = '';
-        let rank = 1;
-
-        if (querySnapshot.empty) {
-            list.innerHTML = '<li style="padding:15px; text-align:center;">Пока пусто. Стань первым!</li>';
-            return;
-        }
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const li = document.createElement('li');
-            li.classList.add('leader-item');
-            
-            // Раскрашиваем 1, 2, 3 места
-            if (rank === 1) li.classList.add('rank-1');
-            if (rank === 2) li.classList.add('rank-2');
-            if (rank === 3) li.classList.add('rank-3');
-
-            // Иконки медалей
-            let rankIcon = rank + '.';
-            if (rank === 1) rankIcon = '🥇';
-            if (rank === 2) rankIcon = '🥈';
-            if (rank === 3) rankIcon = '🥉';
-
-            // Если аватарки нет, ставим заглушку
-            const avatarSrc = data.avatar ? data.avatar : 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
-
-            li.innerHTML = `
-                <div class="leader-rank">${rankIcon}</div>
-                <img src="${avatarSrc}" class="leader-avatar">
-                <div class="leader-name">${data.username}</div>
-                <div class="leader-score">${data.score}</div>
-            `;
-            list.appendChild(li);
-            rank++;
-        });
-
-    } catch (e) {
-        console.error(e);
-        list.innerHTML = '<li>Ошибка загрузки :(</li>';
-    }
+#leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
+
+.leader-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    border: 1px solid transparent;
+}
+
+.leader-rank {
+    width: 30px;
+    font-weight: bold;
+    font-size: 18px;
+}
+.leader-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    margin-right: 15px;
+    object-fit: cover;
+    background: #333;
+}
+.leader-name { flex: 1; font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leader-score { font-weight: bold; color: var(--gold); }
+
+/* СТИЛИ ДЛЯ ТОП 3 */
+.rank-1 { border-color: var(--gold); background: linear-gradient(90deg, rgba(255,215,0,0.2), transparent); }
+.rank-1 .leader-rank { color: var(--gold); font-size: 24px; }
+
+.rank-2 { border-color: var(--silver); background: linear-gradient(90deg, rgba(192,192,192,0.1), transparent); }
+.rank-2 .leader-rank { color: var(--silver); font-size: 22px; }
+
+.rank-3 { border-color: var(--bronze); background: linear-gradient(90deg, rgba(205,127,50,0.1), transparent); }
+.rank-3 .leader-rank { color: var(--bronze); font-size: 20px; }
+
+/* МОДАЛКА */
+.modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 100;
+}
+.modal-content {
+    background: #2e1a47;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    border: 2px solid var(--gold);
+    width: 80%;
+}
+.result-circle {
+    width: 100px; height: 100px;
+    border: 4px solid var(--gold);
+    border-radius: 50%;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--gold);
+}
+.modal-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.small-btn { background: none; border: none; font-size: 24px; color: #fff; cursor: pointer; }
