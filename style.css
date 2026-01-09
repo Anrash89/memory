@@ -1,5 +1,8 @@
 :root {
+    --bg-color: #1a0b2e;
     --gold: #FFD700;
+    --silver: #C0C0C0;
+    --bronze: #CD7F32;
 }
 
 body {
@@ -18,17 +21,15 @@ body {
     width: 100%;
     height: 100%;
     position: relative;
-    display: flex;
-    flex-direction: column;
 }
 
-/* --- ЭКРАНЫ --- */
+/* Экраны */
 .screen {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 10px; /* Немного уменьшил отступ, чтобы карты были крупнее */
+    padding: 20px;
     box-sizing: border-box;
     transition: opacity 0.3s ease;
 }
@@ -45,7 +46,7 @@ body {
     z-index: 10;
 }
 
-/* --- МЕНЮ --- */
+/* МЕНЮ */
 #menu-screen {
     justify-content: center;
     align-items: center;
@@ -53,8 +54,9 @@ body {
 }
 
 h1 {
-    font-size: 42px;
-    margin-bottom: 20px;
+    font-size: 48px;
+    line-height: 1;
+    margin-bottom: 10px;
     color: var(--gold);
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
@@ -64,158 +66,193 @@ h1 {
     flex-direction: column;
     gap: 15px;
     width: 100%;
-    max-width: 280px;
+    max-width: 300px;
+    margin-top: 40px;
 }
 
 .main-btn {
-    padding: 15px;
+    padding: 18px;
     border: none;
-    border-radius: 12px;
-    font-size: 18px;
+    border-radius: 16px;
+    font-size: 20px;
     font-weight: 800;
     cursor: pointer;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: transform 0.1s;
 }
+.main-btn:active { transform: scale(0.96); }
 
 .play-btn { background: var(--gold); color: #2e1a47; }
-.leaders-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+.leaders-btn { background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(255,255,255,0.2); }
 
-/* --- ИГРОВОЕ ПОЛЕ --- */
+/* ИГРА */
 .game-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    font-size: 18px;
+    margin-bottom: 20px;
+    font-size: 20px;
     font-weight: bold;
-    height: 40px;
 }
+
+/* --- ЧИСТЫЕ КАРТЫ (БЕЗ БЕЛОГО ФОНА) --- */
 
 .game-board {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 колонки */
-    gap: 8px; /* Расстояние между картами */
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
     width: 100%;
-    margin: 0 auto;
-    /* Убираем жесткую перспективу, чтобы не искажало */
     perspective: 1000px;
-    /* Центрируем грид по вертикали, если места много */
-    flex: 1; 
-    align-content: center; 
+    margin: 0 auto;
 }
-
-/* --- КАРТЫ (ИСПРАВЛЕНИЕ БЕЛОГО ФОНА) --- */
 
 .card {
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.4s;
+    transition: transform 0.6s;
     cursor: pointer;
     
-    /* САМОЕ ВАЖНОЕ: Делаем контейнер карты полностью прозрачным */
+    /* УБИРАЕМ ВСЕ ФОНЫ И ОТСТУПЫ У КОНТЕЙНЕРА */
     background: transparent !important;
+    padding: 0 !important;
     border: none !important;
-    outline: none !important;
     box-shadow: none !important;
     
-    /* Задаем пропорции. Если карты вытянутые (как покерные), ставим 2/3. 
-       Если квадратные - ставь 1/1 */
-    aspect-ratio: 2.5 / 3.5; 
+    /* Пропорции карты */
+    aspect-ratio: 2 / 3; 
     width: 100%;
-    
-    /* Убираем выделение при нажатии на мобильных */
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
 .card.flipped {
     transform: rotateY(180deg);
 }
 
-/* Общие стили для лица и рубашки */
 .card-front, .card-back {
     position: absolute;
-    top: 0; left: 0;
     width: 100%; 
     height: 100%;
+    
+    /* Убираем border-radius если он есть на самой картинке, или оставляем */
+    /* border-radius: 12px; Let's keep small radius */
     
     display: flex;
     justify-content: center;
     align-items: center;
     backface-visibility: hidden;
     
-    /* Убираем любые фоны и рамки у сторон карты */
-    background: transparent !important;
+    /* ВАЖНО: Убираем цвета и рамки CSS */
+    background-color: transparent !important; 
     border: none !important;
-    border-radius: 0 !important;
     box-shadow: none !important;
+    
+    /* Картинка должна заполнять всё */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-/* ЛИЦЕВАЯ СТОРОНА (где картинка фокуса) */
+/* ЛИЦЕВАЯ СТОРОНА */
 .card-front {
     transform: rotateY(180deg);
-    z-index: 2;
+    /* Здесь картинка будет вставляться через тег <img> в HTML, стили ниже */
 }
 
-/* Картинка на лицевой стороне */
+/* Стиль для картинки внутри лицевой стороны */
 .card-front img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Картинка вписывается полностью */
-    /* Добавляем тень к самой картинке (по контуру), а не к квадрату */
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    object-fit: fill; /* Растягиваем картинку на всю площадь */
     display: block;
 }
 
-/* РУБАШКА (где шляпа) */
+/* РУБАШКА */
 .card-back {
-    /* Фоновая картинка рубашки */
+    /* Тут используем твой логотип как фон на всю карточку */
     background-image: url('img/logo.png');
-    background-position: center;
-    background-repeat: no-repeat;
-    /* Растягиваем рубашку на 100% ширины и высоты */
+    /* Если логотип маленький и ты хочешь его размножить - убери cover */
+    /* Но для красивой карты лучше так: */
     background-size: 100% 100%; 
-    z-index: 1;
-    
-    /* Тень по контуру для PNG рубашки */
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
 }
 
-/* --- ЛИДЕРБОРД --- */
+/* --- КОНЕЦ СТИЛЕЙ КАРТ --- */
+
+/* ЛИДЕРБОРД */
 .leaderboard-container {
     flex: 1;
     overflow-y: auto;
-    background: rgba(0,0,0,0.3);
-    border-radius: 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
     padding: 10px;
 }
-#leaderboard-list { list-style: none; padding: 0; margin: 0; }
-.leader-item {
-    display: flex; align-items: center;
-    padding: 10px; margin-bottom: 5px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
-}
-.leader-avatar { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; }
-.leader-name { flex: 1; font-size: 14px; }
-.leader-score { color: var(--gold); font-weight: bold; }
 
-/* --- МОДАЛЬНОЕ ОКНО --- */
+#leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.leader-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    border: 1px solid transparent;
+}
+
+.leader-rank {
+    width: 30px;
+    font-weight: bold;
+    font-size: 18px;
+}
+.leader-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    margin-right: 15px;
+    object-fit: cover;
+    background: #333;
+}
+.leader-name { flex: 1; font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leader-score { font-weight: bold; color: var(--gold); }
+
+/* СТИЛИ ДЛЯ ТОП 3 */
+.rank-1 { border-color: var(--gold); background: linear-gradient(90deg, rgba(255,215,0,0.2), transparent); }
+.rank-1 .leader-rank { color: var(--gold); font-size: 24px; }
+
+.rank-2 { border-color: var(--silver); background: linear-gradient(90deg, rgba(192,192,192,0.1), transparent); }
+.rank-2 .leader-rank { color: var(--silver); font-size: 22px; }
+
+.rank-3 { border-color: var(--bronze); background: linear-gradient(90deg, rgba(205,127,50,0.1), transparent); }
+.rank-3 .leader-rank { color: var(--bronze); font-size: 20px; }
+
+/* МОДАЛКА */
 .modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.9);
     display: flex; justify-content: center; align-items: center;
     z-index: 100;
 }
 .modal-content {
     background: #2e1a47;
-    padding: 20px;
+    padding: 30px;
     border-radius: 20px;
     text-align: center;
-    width: 80%;
     border: 2px solid var(--gold);
+    width: 80%;
 }
 .result-circle {
-    font-size: 40px; color: var(--gold); margin: 15px 0; font-weight: bold;
+    width: 100px; height: 100px;
+    border: 4px solid var(--gold);
+    border-radius: 50%;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--gold);
 }
-.modal-buttons { display: flex; flex-direction: column; gap: 10px; }
-.small-btn { background: none; border: none; font-size: 24px; cursor: pointer; }
+.modal-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.small-btn { background: none; border: none; font-size: 24px; color: #fff; cursor: pointer; }
