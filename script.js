@@ -1,8 +1,8 @@
-// Импорт Firebase через CDN (специально для браузера/GitHub Pages)
+// Импорт Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- 🔥 ТВОИ НАСТРОЙКИ С КАРТИНКИ (Я ИХ УЖЕ ВСТАВИЛ) 🔥 ---
+// --- ТВОИ НАСТРОЙКИ FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyDwb1lT9GZCF1MViq71aXr1ggtMKYNK2qE",
     authDomain: "memory-4569e.firebaseapp.com",
@@ -13,31 +13,22 @@ const firebaseConfig = {
     measurementId: "G-VEG2RSWXQT"
 };
 
-// Инициализация базы данных
 let db;
 try {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-    console.log("Firebase успешно подключен!");
 } catch (e) {
-    console.error("Ошибка подключения Firebase:", e);
+    console.warn("Ошибка Firebase:", e);
 }
 
-// Подключаем Телеграм
 const tg = window.Telegram.WebApp;
-tg.expand(); // Разворачиваем на весь экран
+tg.expand(); 
 
-// --- НАСТРОЙКИ ИГРЫ ---
-// Убедись, что картинки с такими именами лежат в папке img
+// --- КАРТИНКИ ---
+// Убедись, что logo.png тоже лежит в папке img!
 const imageFiles = [
-    'img/item1.png', 
-    'img/item2.png', 
-    'img/item3.png', 
-    'img/item4.png',
-    'img/item5.png', 
-    'img/item6.png', 
-    'img/item7.png', 
-    'img/roman.png'
+    'img/item1.png', 'img/item2.png', 'img/item3.png', 'img/item4.png',
+    'img/item5.png', 'img/item6.png', 'img/item7.png', 'img/item8.png'
 ];
 
 let cards = [];
@@ -47,58 +38,29 @@ let timer;
 let timeElapsed = 0;
 let isPlaying = false;
 
-// Данные пользователя (если открыли не в ТГ, будет "Гость")
-const user = tg.initDataUnsafe.user || { id: 'test_user_pc', first_name: 'Гость', photo_url: '' };
+const user = tg.initDataUnsafe.user || { id: 'test_local', first_name: 'Игрок', photo_url: '' };
 
-// --- УПРАВЛЕНИЕ ЭКРАНАМИ ---
+// --- ЭКРАНЫ ---
 function showScreen(screenId) {
-    // Скрываем все экраны
     document.querySelectorAll('.screen').forEach(s => {
         s.classList.remove('active');
         s.classList.add('hidden');
     });
-    // Показываем нужный
     const screen = document.getElementById(screenId);
     screen.classList.remove('hidden');
     screen.classList.add('active');
 
-    // Если открыли лидерборд - загружаем данные
-    if (screenId === 'leaderboard-screen') {
-        loadLeaderboard();
-    }
+    if (screenId === 'leaderboard-screen') loadLeaderboard();
 }
 
-// --- КНОПКИ ---
-document.getElementById('btn-play').addEventListener('click', () => {
-    showScreen('game-screen');
-    initGame();
-});
+document.getElementById('btn-play').addEventListener('click', () => { showScreen('game-screen'); initGame(); });
+document.getElementById('btn-leaders').addEventListener('click', () => showScreen('leaderboard-screen'));
+document.getElementById('btn-back-menu').addEventListener('click', () => { clearInterval(timer); showScreen('menu-screen'); });
+document.getElementById('btn-back-from-leaders').addEventListener('click', () => showScreen('menu-screen'));
+document.getElementById('btn-menu-win').addEventListener('click', () => { document.getElementById('modal').classList.add('hidden'); showScreen('menu-screen'); });
+document.getElementById('btn-restart').addEventListener('click', () => { document.getElementById('modal').classList.add('hidden'); initGame(); });
 
-document.getElementById('btn-leaders').addEventListener('click', () => {
-    showScreen('leaderboard-screen');
-});
-
-document.getElementById('btn-back-menu').addEventListener('click', () => {
-    clearInterval(timer);
-    showScreen('menu-screen');
-});
-
-document.getElementById('btn-back-from-leaders').addEventListener('click', () => {
-    showScreen('menu-screen');
-});
-
-document.getElementById('btn-menu-win').addEventListener('click', () => {
-    document.getElementById('modal').classList.add('hidden');
-    showScreen('menu-screen');
-});
-
-document.getElementById('btn-restart').addEventListener('click', () => {
-    document.getElementById('modal').classList.add('hidden');
-    initGame();
-});
-
-
-// --- ЛОГИКА ИГРЫ ---
+// --- ИГРА ---
 function shuffle(array) {
     return array.sort(() => Math.random() - 0.5);
 }
@@ -109,34 +71,36 @@ function initGame() {
     matchedPairs = 0;
     timeElapsed = 0;
     flippedCards = [];
-    
-    // Сброс текстов
     document.getElementById('time').innerText = '0с';
     document.getElementById('score').innerText = '0';
     
-    // Перемешиваем и удваиваем карты
+    // Дублируем и мешаем
     cards = shuffle([...imageFiles, ...imageFiles]);
 
-    // Создаем карточки на поле
+    // Создаем карты
     cards.forEach((imgSrc, index) => {
         const card = document.createElement('div');
         card.classList.add('card');
         card.dataset.index = index;
         card.dataset.img = imgSrc;
 
-        // Внимание: тут прописаны классы card-front и card-back
-        // card-front - это ЛИЦО (картинка)
-        // card-back - это РУБАШКА
+        // ВАЖНО: Структура для 3D переворота
+        // Мы вставляем картинку logo.png как img тег, чтобы она имела размер!
         card.innerHTML = `
-            <div class="card-front"><img src="${imgSrc}"></div>
-            <div class="card-back"></div>
+            <div class="card-inner">
+                <div class="card-front">
+                    <img src="${imgSrc}" alt="item">
+                </div>
+                <div class="card-back">
+                    <img src="img/logo.png" alt="back">
+                </div>
+            </div>
         `;
 
-        card.addEventListener('click', flipCard);
+        card.addEventListener('click', function() { flipCard(this); });
         board.appendChild(card);
     });
 
-    // Запускаем таймер
     clearInterval(timer);
     timer = setInterval(() => {
         timeElapsed++;
@@ -146,13 +110,13 @@ function initGame() {
     isPlaying = true;
 }
 
-function flipCard() {
+function flipCard(card) {
     if (!isPlaying) return;
-    if (flippedCards.length >= 2) return; // Нельзя открыть 3 карты сразу
-    if (this.classList.contains('flipped')) return; // Нельзя нажать на уже открытую
+    if (flippedCards.length >= 2) return;
+    if (card.classList.contains('flipped')) return;
 
-    this.classList.add('flipped');
-    flippedCards.push(this);
+    card.classList.add('flipped');
+    flippedCards.push(card);
 
     if (flippedCards.length === 2) {
         checkMatch();
@@ -162,118 +126,78 @@ function flipCard() {
 function checkMatch() {
     const [card1, card2] = flippedCards;
 
-    // Сравниваем картинки
     if (card1.dataset.img === card2.dataset.img) {
-        // СОВПАДЕНИЕ
         matchedPairs++;
         flippedCards = [];
-        
-        // Если нашли все пары
         if (matchedPairs === imageFiles.length) {
             endGame();
         }
     } else {
-        // НЕ СОВПАЛИ - закрываем через 0.7 сек
         setTimeout(() => {
             card1.classList.remove('flipped');
             card2.classList.remove('flipped');
             flippedCards = [];
-        }, 700);
+        }, 750);
     }
 }
 
 function endGame() {
     clearInterval(timer);
     isPlaying = false;
-    
-    // --- ПОДСЧЕТ ОЧКОВ ---
-    // Формула: 10000 / (время + 10).
-    // Пример: 40 сек -> ~200 очков.
     let score = Math.floor(10000 / (timeElapsed + 10));
-    
     document.getElementById('final-time').innerText = timeElapsed;
     document.getElementById('final-score').innerText = score;
     document.getElementById('modal').classList.remove('hidden');
-
     saveScore(score);
 }
 
-// --- РАБОТА С БАЗОЙ ДАННЫХ (Лидерборд) ---
-
+// --- БАЗА ДАННЫХ ---
 async function saveScore(newScore) {
     if (!db) return;
-    
-    const userId = user.id.toString();
-    const userRef = doc(db, "leaderboard", userId);
-
+    const userRef = doc(db, "leaderboard", user.id.toString());
     try {
-        // Сначала проверяем старый рекорд
         const docSnap = await getDoc(userRef);
         let bestScore = 0;
-        
-        if (docSnap.exists()) {
-            bestScore = docSnap.data().score;
-        }
+        if (docSnap.exists()) bestScore = docSnap.data().score;
 
-        // Если новый результат лучше старого -> сохраняем
         if (newScore > bestScore) {
             await setDoc(userRef, {
-                username: user.first_name, // Имя из ТГ
-                avatar: user.photo_url || "", // Аватарка из ТГ
+                username: user.first_name,
+                avatar: user.photo_url || "",
                 score: newScore,
                 time: timeElapsed,
                 date: Date.now()
             });
-            console.log("Новый рекорд сохранен!");
         }
-    } catch (e) { 
-        console.error("Ошибка сохранения рекорда:", e); 
-    }
+    } catch (e) { console.error(e); }
 }
 
 async function loadLeaderboard() {
+    if (!db) return;
     const list = document.getElementById('leaderboard-list');
-    list.innerHTML = '<li class="loading">Загрузка магии... 🔮</li>';
-
-    if (!db) {
-        list.innerHTML = '<li>Ошибка подключения к БД</li>';
-        return;
-    }
+    list.innerHTML = '<li class="loading">Загрузка...</li>';
 
     try {
-        // Берем топ-20 игроков по очкам
         const q = query(collection(db, "leaderboard"), orderBy("score", "desc"), limit(20));
         const querySnapshot = await getDocs(q);
-
         list.innerHTML = '';
         let rank = 1;
-
-        if (querySnapshot.empty) {
-            list.innerHTML = '<li style="padding:15px; text-align:center;">Пока пусто. Стань первым!</li>';
-            return;
-        }
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const li = document.createElement('li');
             li.classList.add('leader-item');
-            
-            // Раскрашиваем 1, 2, 3 места
             if (rank === 1) li.classList.add('rank-1');
-            if (rank === 2) li.classList.add('rank-2');
-            if (rank === 3) li.classList.add('rank-3');
-
-            // Иконки медалей
+            
             let rankIcon = rank + '.';
             if (rank === 1) rankIcon = '🥇';
             if (rank === 2) rankIcon = '🥈';
             if (rank === 3) rankIcon = '🥉';
 
-            // Если аватарки нет, ставим заглушку
-            const avatarSrc = data.avatar ? data.avatar : 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
+            const avatarSrc = data.avatar || 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
 
             li.innerHTML = `
-                <div class="leader-rank">${rankIcon}</div>
+                <div style="width:30px; font-weight:bold;">${rankIcon}</div>
                 <img src="${avatarSrc}" class="leader-avatar">
                 <div class="leader-name">${data.username}</div>
                 <div class="leader-score">${data.score}</div>
@@ -281,9 +205,5 @@ async function loadLeaderboard() {
             list.appendChild(li);
             rank++;
         });
-
-    } catch (e) {
-        console.error(e);
-        list.innerHTML = '<li>Ошибка загрузки :(</li>';
-    }
+    } catch (e) { list.innerHTML = '<li>Ошибка загрузки</li>'; }
 }
