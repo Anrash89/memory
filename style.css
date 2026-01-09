@@ -1,6 +1,5 @@
 :root {
     --gold: #FFD700;
-    --card-ratio: 0.75; /* Пропорция карты 3:4 */
 }
 
 body {
@@ -29,7 +28,8 @@ body {
     top: 0; left: 0; width: 100%; height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    /* Уменьшили отступы экрана, чтобы карты были шире */
+    padding: 10px; 
     box-sizing: border-box;
     transition: opacity 0.3s ease;
     z-index: 1;
@@ -49,38 +49,40 @@ h1 { font-size: 40px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0
 /* ИГРА */
 .game-header {
     display: flex; justify-content: space-between; align-items: center;
-    height: 50px; font-size: 20px; font-weight: bold; margin-bottom: 10px;
+    height: 40px; font-size: 22px; font-weight: bold; margin-bottom: 5px; padding: 0 10px;
 }
 
-/* --- СЕТКА КАРТ --- */
+/* --- СЕТКА КАРТ (КРУПНЕЕ) --- */
 .game-board {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Ровно 4 колонки */
-    gap: 10px; /* Отступы между картами */
+    grid-template-columns: repeat(4, 1fr); /* 4 колонки */
+    /* Очень маленькие отступы, чтобы карты были крупными */
+    gap: 6px; 
     width: 100%;
-    max-width: 450px; /* Чтобы на планшетах не разъезжалось */
-    margin: 0 auto; /* Центрируем */
-    align-content: center; /* Центрируем по вертикали */
-    flex-grow: 1; /* Занимает всё свободное место */
+    height: 100%;
+    /* Выравниваем по центру */
+    align-content: center; 
+    margin: 0 auto;
 }
 
-/* КАРТА */
+/* КАРТА - КОНТЕЙНЕР */
 .card {
     position: relative;
     width: 100%;
-    /* Делаем карту прямоугольной (вертикальной) */
-    aspect-ratio: 3 / 4; 
+    /* Пропорции игральной карты */
+    aspect-ratio: 2.8 / 4; 
     perspective: 1000px;
     cursor: pointer;
-    background: transparent !important; /* Убираем все фоны */
+    /* УБИРАЕМ ЛЮБОЙ ФОН У КОНТЕЙНЕРА */
+    background: transparent !important;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .card-inner {
     position: relative;
     width: 100%;
     height: 100%;
-    text-align: center;
-    transition: transform 0.5s;
+    transition: transform 0.4s;
     transform-style: preserve-3d;
 }
 
@@ -88,7 +90,7 @@ h1 { font-size: 40px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0
     transform: rotateY(180deg);
 }
 
-/* ЛИЦО И РУБАШКА */
+/* СТОРОНЫ КАРТЫ */
 .card-front, .card-back {
     position: absolute;
     width: 100%;
@@ -97,35 +99,36 @@ h1 { font-size: 40px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 10px;
     
-    /* Убираем белые рамки */
+    /* ВАЖНО: Никаких фонов и рамок у блоков div */
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    border-radius: 0 !important;
 }
 
-/* Картинки внутри карты */
+/* САМИ КАРТИНКИ */
 .card-front img, .card-back img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Картинка вписывается полностью */
+    /* object-fit: fill растянет картинку на весь блок. 
+       Если картинки квадратные, а блок прямоугольный - они растянутся.
+       Если хочешь сохранить пропорции, поставь contain */
+    object-fit: contain; 
     display: block;
     
-    /* Добавляем красивую тень самому предмету (а не рамке) */
-    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
+    /* Тень накладывается на САМУ картинку (по контуру PNG), а не на квадрат */
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
 }
 
-/* ЛИЦО (Повернуто изначально) */
 .card-front {
     transform: rotateY(180deg);
 }
 
-/* РУБАШКА */
 .card-back {
-    /* Если вдруг картинка не прогрузится, будет полупрозрачный фон */
-    background: rgba(255, 255, 255, 0.05) !important; 
+    transform: rotateY(0deg);
 }
+
 
 /* ЛИДЕРБОРД */
 .screen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
