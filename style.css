@@ -1,5 +1,6 @@
 :root {
     --gold: #FFD700;
+    --bg-dark: #0f0518;
 }
 
 body {
@@ -22,67 +23,64 @@ body {
     flex-direction: column;
 }
 
-/* ЭКРАНЫ */
+/* --- ЭКРАНЫ --- */
 .screen {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     display: flex;
     flex-direction: column;
-    /* Уменьшили отступы экрана, чтобы карты были шире */
-    padding: 10px; 
+    padding: 10px; /* Минимальный отступ от краев */
     box-sizing: border-box;
-    transition: opacity 0.3s ease;
     z-index: 1;
 }
 
-.hidden { opacity: 0; pointer-events: none; z-index: -1; }
-.active { opacity: 1; pointer-events: auto; z-index: 10; }
+/* ВАЖНО: Используем display: none, чтобы скрытые экраны не блокировали кнопки */
+.hidden {
+    display: none !important;
+}
 
-/* МЕНЮ */
+/* --- МЕНЮ --- */
 #menu-screen { justify-content: center; align-items: center; text-align: center; }
-h1 { font-size: 40px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); margin-bottom: 20px; }
-.menu-buttons { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 260px; }
-.main-btn { padding: 16px; border: none; border-radius: 14px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+h1 { font-size: 42px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); margin-bottom: 20px; }
+.menu-buttons { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 280px; }
+.main-btn { padding: 18px; border: none; border-radius: 14px; font-size: 20px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; }
 .play-btn { background: var(--gold); color: #2e1a47; }
 .leaders-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
 
-/* ИГРА */
+/* --- ИГРА --- */
 .game-header {
     display: flex; justify-content: space-between; align-items: center;
-    height: 40px; font-size: 22px; font-weight: bold; margin-bottom: 5px; padding: 0 10px;
+    height: 40px; font-size: 18px; font-weight: bold; margin-bottom: 5px;
 }
 
-/* --- СЕТКА КАРТ (КРУПНЕЕ) --- */
+/* СЕТКА КАРТ - МАКСИМАЛЬНЫЙ РАЗМЕР */
 .game-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* 4 колонки */
-    /* Очень маленькие отступы, чтобы карты были крупными */
-    gap: 6px; 
+    gap: 4px; /* Очень маленький зазор между картами */
     width: 100%;
-    height: 100%;
-    /* Выравниваем по центру */
-    align-content: center; 
+    height: 100%; /* Растягиваем на всю высоту */
+    align-content: center; /* Центрируем по вертикали */
+    /* Убираем ограничение max-width, чтобы на широких телефонах было крупно */
+    max-width: 600px; 
     margin: 0 auto;
 }
 
-/* КАРТА - КОНТЕЙНЕР */
 .card {
     position: relative;
     width: 100%;
-    /* Пропорции игральной карты */
-    aspect-ratio: 2.8 / 4; 
+    /* Пропорция 2 к 3 делает карты более "толстенькими" и крупными, чем 3 к 4 */
+    aspect-ratio: 2 / 3; 
     perspective: 1000px;
     cursor: pointer;
-    /* УБИРАЕМ ЛЮБОЙ ФОН У КОНТЕЙНЕРА */
     background: transparent !important;
-    -webkit-tap-highlight-color: transparent;
 }
 
 .card-inner {
     position: relative;
     width: 100%;
     height: 100%;
-    transition: transform 0.4s;
+    transition: transform 0.3s; /* Быстрый переворот */
     transform-style: preserve-3d;
 }
 
@@ -90,7 +88,6 @@ h1 { font-size: 40px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0
     transform: rotateY(180deg);
 }
 
-/* СТОРОНЫ КАРТЫ */
 .card-front, .card-back {
     position: absolute;
     width: 100%;
@@ -99,50 +96,49 @@ h1 { font-size: 40px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0
     display: flex;
     justify-content: center;
     align-items: center;
-    
-    /* ВАЖНО: Никаких фонов и рамок у блоков div */
     background: transparent !important;
     border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
 }
 
-/* САМИ КАРТИНКИ */
 .card-front img, .card-back img {
     width: 100%;
     height: 100%;
-    /* object-fit: fill растянет картинку на весь блок. 
-       Если картинки квадратные, а блок прямоугольный - они растянутся.
-       Если хочешь сохранить пропорции, поставь contain */
-    object-fit: contain; 
+    object-fit: contain;
     display: block;
-    
-    /* Тень накладывается на САМУ картинку (по контуру PNG), а не на квадрат */
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    /* Тень только у картинки */
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.6));
 }
 
-.card-front {
-    transform: rotateY(180deg);
-}
-
-.card-back {
-    transform: rotateY(0deg);
-}
+.card-front { transform: rotateY(180deg); }
+.card-back { transform: rotateY(0deg); }
 
 
-/* ЛИДЕРБОРД */
+/* --- ЛИДЕРБОРД --- */
 .screen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .leaderboard-container { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; }
 #leaderboard-list { list-style: none; padding: 0; margin: 0; }
-.leader-item { display: flex; align-items: center; padding: 10px; margin-bottom: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; }
+.leader-item { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; }
 .leader-avatar { width: 35px; height: 35px; border-radius: 50%; margin-right: 12px; background: #333; }
-.leader-name { flex: 1; font-weight: 600; font-size: 15px; }
+.leader-name { flex: 1; font-weight: 600; font-size: 16px; }
 .leader-score { color: var(--gold); font-weight: bold; }
 .rank-1 { border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.15); }
 
-/* МОДАЛКА */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
-.modal-content { background: #2e1a47; padding: 30px; border-radius: 20px; text-align: center; border: 2px solid var(--gold); width: 80%; max-width: 300px; }
-.result-circle { font-size: 48px; color: var(--gold); margin: 20px 0; font-weight: bold; }
+/* --- МОДАЛКА ПОБЕДЫ --- */
+.modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 999; /* Поверх всего */
+}
+.modal-content {
+    background: #2e1a47;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    border: 2px solid var(--gold);
+    width: 85%;
+    max-width: 320px;
+}
+.result-circle { font-size: 50px; color: var(--gold); margin: 20px 0; font-weight: bold; }
 .modal-buttons { display: flex; flex-direction: column; gap: 10px; }
-.small-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; }
+.small-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: #fff; z-index: 100; }
