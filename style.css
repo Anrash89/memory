@@ -1,10 +1,6 @@
 :root {
-    --bg-color: #1a0b2e;
-    --card-bg: #2e1a47;
     --gold: #FFD700;
-    --silver: #C0C0C0;
-    --bronze: #CD7F32;
-    --accent: #9d4edd;
+    --card-ratio: 0.75; /* Пропорция карты 3:4 */
 }
 
 body {
@@ -14,236 +10,136 @@ body {
     margin: 0;
     padding: 0;
     height: 100vh;
-    overflow: hidden; /* Чтобы не скроллилось всё окно */
-    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .app-container {
     width: 100%;
     height: 100%;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Экраны */
+/* ЭКРАНЫ */
 .screen {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 15px;
     box-sizing: border-box;
     transition: opacity 0.3s ease;
+    z-index: 1;
 }
 
-.hidden {
-    opacity: 0;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.active {
-    opacity: 1;
-    pointer-events: auto;
-    z-index: 10;
-}
+.hidden { opacity: 0; pointer-events: none; z-index: -1; }
+.active { opacity: 1; pointer-events: auto; z-index: 10; }
 
 /* МЕНЮ */
-#menu-screen {
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-h1 {
-    font-size: 48px;
-    line-height: 1;
-    margin-bottom: 10px;
-    color: var(--gold);
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-}
-
-.menu-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-    max-width: 300px;
-    margin-top: 40px;
-}
-
-.main-btn {
-    padding: 18px;
-    border: none;
-    border-radius: 16px;
-    font-size: 20px;
-    font-weight: 800;
-    cursor: pointer;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    transition: transform 0.1s;
-}
-.main-btn:active { transform: scale(0.96); }
-
+#menu-screen { justify-content: center; align-items: center; text-align: center; }
+h1 { font-size: 40px; color: var(--gold); text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); margin-bottom: 20px; }
+.menu-buttons { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 260px; }
+.main-btn { padding: 16px; border: none; border-radius: 14px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 .play-btn { background: var(--gold); color: #2e1a47; }
-.leaders-btn { background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(255,255,255,0.2); }
+.leaders-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
 
 /* ИГРА */
 .game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    font-size: 20px;
-    font-weight: bold;
+    display: flex; justify-content: space-between; align-items: center;
+    height: 50px; font-size: 20px; font-weight: bold; margin-bottom: 10px;
 }
 
-/* --- ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ КАРТ --- */
-
+/* --- СЕТКА КАРТ --- */
 .game-board {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(4, 1fr); /* Ровно 4 колонки */
+    gap: 10px; /* Отступы между картами */
     width: 100%;
-    /* Убрали жесткий aspect-ratio, чтобы сетка дышала */
-    perspective: 1000px;
-    margin: 0 auto;
+    max-width: 450px; /* Чтобы на планшетах не разъезжалось */
+    margin: 0 auto; /* Центрируем */
+    align-content: center; /* Центрируем по вертикали */
+    flex-grow: 1; /* Занимает всё свободное место */
 }
 
-/* Внешний контейнер карты - делаем его невидимым */
+/* КАРТА */
 .card {
     position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.6s;
-    cursor: pointer;
-    
-    /* ВАЖНО: Убираем фон, рамки и отступы у контейнера */
-    background: transparent !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    
-    /* Делаем карты прямоугольными */
-    aspect-ratio: 2 / 3; 
     width: 100%;
+    /* Делаем карту прямоугольной (вертикальной) */
+    aspect-ratio: 3 / 4; 
+    perspective: 1000px;
+    cursor: pointer;
+    background: transparent !important; /* Убираем все фоны */
 }
 
-.card.flipped {
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+}
+
+.card.flipped .card-inner {
     transform: rotateY(180deg);
 }
 
-/* Внутренние части карты - они теперь будут видимыми */
+/* ЛИЦО И РУБАШКА */
 .card-front, .card-back {
     position: absolute;
-    width: 100%; 
+    width: 100%;
     height: 100%;
-    border-radius: 12px; /* Скругление углов самой карты */
+    backface-visibility: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-    backface-visibility: hidden;
+    border-radius: 10px;
     
-    /* Рамка и тень теперь только у внутренней части */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    border: 2px solid var(--gold);
-    box-sizing: border-box;
-    overflow: hidden;
+    /* Убираем белые рамки */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-.card-front { 
-    background: #fff; /* Белый фон только ПОД картинкой с фокусом */
-    transform: rotateY(180deg); 
+/* Картинки внутри карты */
+.card-front img, .card-back img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Картинка вписывается полностью */
+    display: block;
+    
+    /* Добавляем красивую тень самому предмету (а не рамке) */
+    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
 }
 
-.card-front img { 
-    width: 90%; 
-    height: 90%; 
-    object-fit: contain; 
+/* ЛИЦО (Повернуто изначально) */
+.card-front {
+    transform: rotateY(180deg);
 }
 
-.card-back { 
-    /* Твоя рубашка с логотипом */
-    background: var(--card-bg) url('img/logo.png') center/cover no-repeat; 
+/* РУБАШКА */
+.card-back {
+    /* Если вдруг картинка не прогрузится, будет полупрозрачный фон */
+    background: rgba(255, 255, 255, 0.05) !important; 
 }
-
-/* --- КОНЕЦ ИСПРАВЛЕНИЯ КАРТ --- */
 
 /* ЛИДЕРБОРД */
-.leaderboard-container {
-    flex: 1;
-    overflow-y: auto; /* Скролл только внутри списка */
-    background: rgba(0,0,0,0.2);
-    border-radius: 15px;
-    padding: 10px;
-}
-
-#leaderboard-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.leader-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    margin-bottom: 8px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    border: 1px solid transparent;
-}
-
-.leader-rank {
-    width: 30px;
-    font-weight: bold;
-    font-size: 18px;
-}
-.leader-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    margin-right: 15px;
-    object-fit: cover;
-    background: #333;
-}
-.leader-name { flex: 1; font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.leader-score { font-weight: bold; color: var(--gold); }
-
-/* СТИЛИ ДЛЯ ТОП 3 */
-.rank-1 { border-color: var(--gold); background: linear-gradient(90deg, rgba(255,215,0,0.2), transparent); }
-.rank-1 .leader-rank { color: var(--gold); font-size: 24px; }
-
-.rank-2 { border-color: var(--silver); background: linear-gradient(90deg, rgba(192,192,192,0.1), transparent); }
-.rank-2 .leader-rank { color: var(--silver); font-size: 22px; }
-
-.rank-3 { border-color: var(--bronze); background: linear-gradient(90deg, rgba(205,127,50,0.1), transparent); }
-.rank-3 .leader-rank { color: var(--bronze); font-size: 20px; }
+.screen-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.leaderboard-container { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; }
+#leaderboard-list { list-style: none; padding: 0; margin: 0; }
+.leader-item { display: flex; align-items: center; padding: 10px; margin-bottom: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; }
+.leader-avatar { width: 35px; height: 35px; border-radius: 50%; margin-right: 12px; background: #333; }
+.leader-name { flex: 1; font-weight: 600; font-size: 15px; }
+.leader-score { color: var(--gold); font-weight: bold; }
+.rank-1 { border: 1px solid var(--gold); background: rgba(255, 215, 0, 0.15); }
 
 /* МОДАЛКА */
-.modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.9);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 100;
-}
-.modal-content {
-    background: #2e1a47;
-    padding: 30px;
-    border-radius: 20px;
-    text-align: center;
-    border: 2px solid var(--gold);
-    width: 80%;
-}
-.result-circle {
-    width: 100px; height: 100px;
-    border: 4px solid var(--gold);
-    border-radius: 50%;
-    margin: 20px auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 32px;
-    font-weight: bold;
-    color: var(--gold);
-}
-.modal-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-.small-btn { background: none; border: none; font-size: 24px; color: #fff; cursor: pointer; }
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
+.modal-content { background: #2e1a47; padding: 30px; border-radius: 20px; text-align: center; border: 2px solid var(--gold); width: 80%; max-width: 300px; }
+.result-circle { font-size: 48px; color: var(--gold); margin: 20px 0; font-weight: bold; }
+.modal-buttons { display: flex; flex-direction: column; gap: 10px; }
+.small-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; }
