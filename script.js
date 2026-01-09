@@ -25,7 +25,6 @@ const tg = window.Telegram.WebApp;
 tg.expand(); 
 
 // --- КАРТИНКИ ---
-// Убедись, что logo.png тоже лежит в папке img!
 const imageFiles = [
     'img/item1.png', 'img/item2.png', 'img/item3.png', 'img/item4.png',
     'img/item5.png', 'img/item6.png', 'img/item7.png', 'img/item8.png'
@@ -53,9 +52,10 @@ function showScreen(screenId) {
     if (screenId === 'leaderboard-screen') loadLeaderboard();
 }
 
+// Кнопки
 document.getElementById('btn-play').addEventListener('click', () => { showScreen('game-screen'); initGame(); });
 document.getElementById('btn-leaders').addEventListener('click', () => showScreen('leaderboard-screen'));
-document.getElementById('btn-back-menu').addEventListener('click', () => { clearInterval(timer); showScreen('menu-screen'); });
+// Кнопка домика удалена, поэтому удаляем и слушатель для нее
 document.getElementById('btn-back-from-leaders').addEventListener('click', () => showScreen('menu-screen'));
 document.getElementById('btn-menu-win').addEventListener('click', () => { document.getElementById('modal').classList.add('hidden'); showScreen('menu-screen'); });
 document.getElementById('btn-restart').addEventListener('click', () => { document.getElementById('modal').classList.add('hidden'); initGame(); });
@@ -84,8 +84,7 @@ function initGame() {
         card.dataset.index = index;
         card.dataset.img = imgSrc;
 
-        // ВАЖНО: Структура для 3D переворота
-        // Мы вставляем картинку logo.png как img тег, чтобы она имела размер!
+        // Вставляем картинки
         card.innerHTML = `
             <div class="card-inner">
                 <div class="card-front">
