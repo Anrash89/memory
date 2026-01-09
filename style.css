@@ -1,8 +1,10 @@
 :root {
     --bg-color: #1a0b2e;
+    --card-bg: #2e1a47;
     --gold: #FFD700;
     --silver: #C0C0C0;
     --bronze: #CD7F32;
+    --accent: #9d4edd;
 }
 
 body {
@@ -12,7 +14,7 @@ body {
     margin: 0;
     padding: 0;
     height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* Чтобы не скроллилось всё окно */
     -webkit-tap-highlight-color: transparent;
     user-select: none;
 }
@@ -95,30 +97,32 @@ h1 {
     font-weight: bold;
 }
 
-/* --- ЧИСТЫЕ КАРТЫ (БЕЗ БЕЛОГО ФОНА) --- */
+/* --- ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ КАРТ --- */
 
 .game-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     width: 100%;
+    /* Убрали жесткий aspect-ratio, чтобы сетка дышала */
     perspective: 1000px;
     margin: 0 auto;
 }
 
+/* Внешний контейнер карты - делаем его невидимым */
 .card {
     position: relative;
     transform-style: preserve-3d;
     transition: transform 0.6s;
     cursor: pointer;
     
-    /* УБИРАЕМ ВСЕ ФОНЫ И ОТСТУПЫ У КОНТЕЙНЕРА */
+    /* ВАЖНО: Убираем фон, рамки и отступы у контейнера */
     background: transparent !important;
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
     
-    /* Пропорции карты */
+    /* Делаем карты прямоугольными */
     aspect-ratio: 2 / 3; 
     width: 100%;
 }
@@ -127,59 +131,46 @@ h1 {
     transform: rotateY(180deg);
 }
 
+/* Внутренние части карты - они теперь будут видимыми */
 .card-front, .card-back {
     position: absolute;
     width: 100%; 
     height: 100%;
-    
-    /* Убираем border-radius если он есть на самой картинке, или оставляем */
-    /* border-radius: 12px; Let's keep small radius */
-    
+    border-radius: 12px; /* Скругление углов самой карты */
     display: flex;
     justify-content: center;
     align-items: center;
     backface-visibility: hidden;
     
-    /* ВАЖНО: Убираем цвета и рамки CSS */
-    background-color: transparent !important; 
-    border: none !important;
-    box-shadow: none !important;
-    
-    /* Картинка должна заполнять всё */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    /* Рамка и тень теперь только у внутренней части */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border: 2px solid var(--gold);
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-/* ЛИЦЕВАЯ СТОРОНА */
-.card-front {
-    transform: rotateY(180deg);
-    /* Здесь картинка будет вставляться через тег <img> в HTML, стили ниже */
+.card-front { 
+    background: #fff; /* Белый фон только ПОД картинкой с фокусом */
+    transform: rotateY(180deg); 
 }
 
-/* Стиль для картинки внутри лицевой стороны */
-.card-front img {
-    width: 100%;
-    height: 100%;
-    object-fit: fill; /* Растягиваем картинку на всю площадь */
-    display: block;
+.card-front img { 
+    width: 90%; 
+    height: 90%; 
+    object-fit: contain; 
 }
 
-/* РУБАШКА */
-.card-back {
-    /* Тут используем твой логотип как фон на всю карточку */
-    background-image: url('img/logo.png');
-    /* Если логотип маленький и ты хочешь его размножить - убери cover */
-    /* Но для красивой карты лучше так: */
-    background-size: 100% 100%; 
+.card-back { 
+    /* Твоя рубашка с логотипом */
+    background: var(--card-bg) url('img/logo.png') center/cover no-repeat; 
 }
 
-/* --- КОНЕЦ СТИЛЕЙ КАРТ --- */
+/* --- КОНЕЦ ИСПРАВЛЕНИЯ КАРТ --- */
 
 /* ЛИДЕРБОРД */
 .leaderboard-container {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: auto; /* Скролл только внутри списка */
     background: rgba(0,0,0,0.2);
     border-radius: 15px;
     padding: 10px;
