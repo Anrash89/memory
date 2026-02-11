@@ -21,10 +21,14 @@ try {
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+// Список картинок для игры
 const imageFiles = [
     'img/item1.png', 'img/item2.png', 'img/item3.png', 'img/item4.png',
     'img/item5.png', 'img/item6.png', 'img/item7.png', 'img/item8.png'
 ];
+
+// Добавляем логотип для предзагрузки, чтобы рубашка карт тоже не мигала
+const allAssetsToLoad = [...imageFiles, 'img/logo.png'];
 
 let cards = [];
 let flippedCards = [];
@@ -35,14 +39,43 @@ let isPlaying = false;
 
 const user = tg.initDataUnsafe.user || { id: 'test', first_name: 'Игрок', photo_url: '' };
 
-// --- ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ (ИСПРАВЛЕНАЯ) ---
+// --- ПРЕДЗАГРУЗКА КАРТИНОК ---
+function preloadImages() {
+    const promises = allAssetsToLoad.map(src => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = resolve; // Успех
+            img.onerror = resolve; // Ошибка (но продолжаем, чтобы не зависло)
+        });
+    });
+
+    // Ждем загрузки ВСЕХ картинок
+    Promise.all(promises).then(() => {
+        // Убираем экран загрузки
+        const loader = document.getElementById('loader');
+        if(loader) {
+            loader.classList.add('fade-out');
+            setTimeout(() => {
+                loader.classList.add('hidden');
+            }, 500); // Ждем пока пройдет анимация fade-out
+        }
+    });
+}
+
+// Запускаем загрузку сразу при старте скрипта
+preloadImages();
+
+
+// --- ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ ---
 function showScreen(screenId) {
-    // Сначала скрываем всё через display: none
     document.querySelectorAll('.screen').forEach(s => {
-        s.classList.add('hidden');
+        // Не скрываем loader-screen через эту функцию, он сам исчезнет
+        if (!s.classList.contains('loader-screen')) {
+            s.classList.add('hidden');
+        }
     });
     
-    // Показываем нужное
     const screen = document.getElementById(screenId);
     if(screen) {
         screen.classList.remove('hidden');
@@ -52,19 +85,12 @@ function showScreen(screenId) {
 }
 
 // --- СЛУШАТЕЛИ КНОПОК ---
-// Меню
 document.getElementById('btn-play').addEventListener('click', () => { showScreen('game-screen'); initGame(); });
 document.getElementById('btn-leaders').addEventListener('click', () => showScreen('leaderboard-screen'));
-
-// Внутри игры
 document.getElementById('btn-back-menu').addEventListener('click', () => { clearInterval(timer); showScreen('menu-screen'); });
+document.getElementById('btn-back-from-leaders').addEventListener('click', () => { showScreen('menu-screen'); });
 
-// В лидерборде (КНОПКА НАЗАД)
-document.getElementById('btn-back-from-leaders').addEventListener('click', () => { 
-    showScreen('menu-screen'); 
-});
-
-// Модальное окно победы
+// Модальное окно
 document.getElementById('btn-menu-win').addEventListener('click', () => { 
     document.getElementById('modal').classList.add('hidden'); 
     showScreen('menu-screen'); 
@@ -76,7 +102,7 @@ document.getElementById('btn-restart').addEventListener('click', () => {
 });
 
 
-// --- ИГРА ---
+// --- ЛОГИКА ИГРЫ ---
 function shuffle(array) {
     return array.sort(() => Math.random() - 0.5);
 }
@@ -149,15 +175,16 @@ function checkMatch() {
 function endGame() {
     clearInterval(timer);
     isPlaying = false;
+    // Формула очков
     let score = Math.floor(10000 / (timeElapsed + 10));
+    
     document.getElementById('final-time').innerText = timeElapsed;
     document.getElementById('final-score').innerText = score;
-    // Показываем модалку
     document.getElementById('modal').classList.remove('hidden');
     saveScore(score);
 }
 
-// --- БД ---
+// --- БД FIREBASE ---
 async function saveScore(newScore) {
     if (!db) return;
     const userRef = doc(db, "leaderboard", user.id.toString());
